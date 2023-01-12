@@ -8,19 +8,24 @@ from matplotlib.backends.backend_pdf import PdfPages
 import datetime
 from statistics import mean, median, stdev
 #import yappi
+from numba import jit
 
 cm = 1/2.54  # centimeters in inches
 
 # benchmarking functions
+@jit
 def computeDeJong1(x):
     return sum([xi**2 for xi in x])
 
+@jit
 def computeDeJong2(x):
     return sum([100 * (x[i]**2 - x[i+1])**2 + (1 - x[i])**2 for i in range(len(x)-1)])
 
+@jit
 def computeSchwefel(x):
     return sum([-xi * sin(sqrt(abs(xi))) for xi in x])
-    
+
+@jit
 def computeRastrigin(x):
     return 10 * len(x) + sum([xi**2 - 10 * cos(2*pi*xi) for xi in x])
 
@@ -50,9 +55,9 @@ functionRanges = {
     3 : (-5.12, 5.12)
 }
 
-# y-ns, dimension N
+# x-es times dimension N
 functionMins = {
-    0 : 0.0,
+    0 : 0.0, # (0.0, 0.0, 0.0, ..., 0.0)
     1 : 1.0,
     2 : 420.9687,
     3 : 0.0
@@ -103,26 +108,26 @@ statsDict = {
 }
 
 # single particle update
+@jit
 def particleSwarmOptimizationSingle(func, ranges, dims, particlePosition, particleVelocity, particleBestPos, swarmBestPos, params):
     w = params[0]
     ro_p = params[1]
     ro_g = params[2]
-    for d in range(dims):
-        rp = random.SystemRandom().uniform(0.0, 1.0)
-        rg = random.SystemRandom().uniform(0.0, 1.0)
-        particleVelocity[d] = w * particleVelocity[d] + ro_p * rp * (particleBestPos[d] - particlePosition[d]) + ro_g * rg * (swarmBestPos[d] - particlePosition[d])
-        particlePosition[d] = ranges[0] + ((ranges[0] + particlePosition[d] + particleVelocity[d]) % (ranges[1] - ranges[0]))
-    result = func(particlePosition)
-    if result < func(particleBestPos):
+    rp = np.random.uniform(0.0, 1.0, dims)
+    rg = np.random.uniform(0.0, 1.0, dims)
+    particleVelocity = w * particleVelocity + ro_p * rp * (particleBestPos - particlePosition) + ro_g * rg * (swarmBestPos - particlePosition)
+    particlePosition = ranges[0] + (
+                (ranges[0] + particlePosition + particleVelocity) % (ranges[1] - ranges[0]))
+    result = func(list(particlePosition))
+    if result < func(list(particleBestPos)):
         particleBestPos = particlePosition.copy()
-        if result < func(swarmBestPos):
+        if result < func(list(swarmBestPos)):
             swarmBestPos = particleBestPos.copy()
     return (particlePosition, particleVelocity, particleBestPos, swarmBestPos)
 
 # swarm update
 def particleSwarmOptimization(fes = 5000, particleCount = 50, w_init=0.9, w_end=0.4, ro_p=2.0, ro_g=2.0):
     algName = "Particle Swarm Optimization"
-    bestValues = [] # swarm position
     for d in dimensions:
         print("DIM=" + str(d))
         for fk, fv in functionRanges.items():
@@ -132,18 +137,17 @@ def particleSwarmOptimization(fes = 5000, particleCount = 50, w_init=0.9, w_end=
             for r in range(30):
                 global results
                 results[algName][d][fk][r] = []
-                values = [random.SystemRandom().uniform(fv[0], fv[1]) for i in range(d)]
-                bestValues = values
-                lambdaRand = lambda rangeDown, rangeUp: random.SystemRandom().uniform(rangeDown, rangeUp)
-                particles = [ [ lambdaRand(fv[0], fv[1]) for i in range(d) ] for p in range(particleCount) ]
-                particleVelocities = [ [ lambdaRand(-abs(fv[1] - fv[0]), abs(fv[1] - fv[0])) for i in range(d) ] for p in range(particleCount) ]
-                particlesBestPositions = [p.copy() for p in particles]
+                values = np.random.uniform(fv[0], fv[1], d)
+                bestValues = np.copy(values)
+                particles = np.random.uniform(fv[0], fv[1], (particleCount, d))
+                particleVelocities = np. random.uniform(-abs(fv[1] - fv[0]), abs(fv[1] - fv[0]), (particleCount, d))
+                particlesBestPositions = np.copy(particles)
                 print("{rnd:2d}.[".format(rnd=r+1), end='')
                 sys.stdout.flush()
                 for j in range(fes):
                     for p in range(particleCount): # particles
                         global functions
-                        (particles[p], particleVelocities[p], particlesBestPositions[p], bestValues) = particleSwarmOptimizationSingle(functions[fk], functionRanges[fk], d, particles[p], particleVelocities[p], particlesBestPositions[p], bestValues, (w_init + (j/fes)*(w_init - w_end), ro_p, ro_g))
+                        (particles[p, :], particleVelocities[p, :], particlesBestPositions[p, :], bestValues) = particleSwarmOptimizationSingle(functions[fk], functionRanges[fk], d, particles[p, :], particleVelocities[p, :], particlesBestPositions[p, :], bestValues, (w_end + (j/fes)*(w_init - w_end), ro_p, ro_g))
                     results[algName][d][fk][r].append(functions[fk](bestValues))
                     statsDict[algName][d][fk].values.extend(results[algName][d][fk][r])
                     if (((j / fes) * 100) % 10) == 0:
@@ -260,6 +264,7 @@ def plotGraphs():
 def main():
     #yappi.set_clock_type("cpu")
     #yappi.start()
+    #np.seterr(all='raise')
     particleSwarmOptimization(5000)
     #yappi.get_func_stats().print_all()
     #yappi.get_thread_stats().print_all()

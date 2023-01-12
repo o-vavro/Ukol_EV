@@ -1,0 +1,66 @@
+Raoadmap k zápočtu a případně pomocí Bonusu ke zkoušce za "Áčko"
+Pro získání zápočtu je nutné včas odevzdat povinný programovací úkol - následně je možné vykonat písemnou/ústní/on-line zkoušku (dle aktuální situace s koroušem).
+
+Termín pro  odevzdání povinného úkolu je 28.1.2022
+Kdo se bude chtít úplně vyhnout zkoušce a získat hodnocení A - výborně, zúročí zkušenosti z povinného úkolu a z Bonusu z předmětu AAMAI. Je každopádně ale nutné odevzdat oba úkoly (povinný + bonus)!
+
+Termín pro  odevzdání Bonusového úkolu je 11.2.2022.
+
+Zadání povinného zápočtového úkolu:
+Vaším úkolem bude implementace libovolného evolučního algoritmu a vytvoření jednoduchých statistických a grafických výstupů.
+
+Algoritmy (vyberte libovolný jeden z totoho seznamu):
+
+DE/jDE
+SOMA (AllToOne strategie)
+PSO
+Testovací funkce (Dimenze D=10 a D=30):
+
+1st DeJong function
+2nd DeJong function
+Schweffel function
+Rastrigin
+Funkce - definice v níže přiloženém souboru
+
+FES bude nastaven na 5 000 x D. Algoritmus se musí spustit opakovaně 30x pro každou zkušební funkci - pro získání nějakého statistického základu - vypočítáte (z 30 nejlepších výsledků) Min, Max, Mean, Median a Std. Dev.
+Musíte také potvrdit vaše výsledky vykreslením nejlepších řešení z každé iterace - tj. Konvergenční graf. Vaším úkolem bude vykreslit:
+
+ Konvergenční graf všech 30 běhů v jednom grafu (30 čar v 1 grafu) - celkem 8 grafů (1 algoritmus x 4 funkce x 2 nastavení D)
+
+Konvergenční graf průměrného nejlepšího výsledků - tj. průměrné nejlepší řešení v každé iteraci (z 30 běhů) - celkem 8 grafů ( 1 algoritmus x 4 funkce x 2 nastavení D).
+
+
+Berte v úvahu následující a nastavení parametrů:
+
+Nelze opustit vyhledávací prostor - při vytváření nových řešení - zkontrolujte hranice typické pro každou testovací funkci. Pokud opustíte vyhledávací prostor - aplikujte libovolnou zvolenou funkci pro kontrolu hranic (random, periodic, reflection...).
+
+Nastavení – pro DE/jDE (NP = 50, F = 0.5, CR = 0.9 (pro jDE je to pouze init nastavení, zbytek dle článku J. Brest et. al), pro SOMA (NP = 50, prt = 0.3, PathLength = 3, step = 0.33), pro PSO (NP = 50, c1 a c2 = 2.0, inertia weight: wstart = 0.9, wend = 0.4).
+
+
+Zadání Bonusového úkolu:
+Implementujte CEC 2020 Testbed.
+K dispozici je verze v jazyce C a Matlab (nicméně definice funkcí atd je možné pře-kodovat kam chcete - případně z JAVA volat C atd...). : dispozici zde (pdf s definitions, dále kod v software.zip):
+
+https://github.com/P-N-Suganthan/2020-Bound-Constrained-Opt-Benchmark
+
+Někteří jej znáte již z pokusů z AAMAI - pozor na volání funkcí - autoři kodu se moc nepárali se změnami a s číslováním některých vybraných funkcí oproti předchozímu benchmarku, který obsahoval 30 funkcí.
+
+Tento obsahuje 10 funkcí. Je potřeba brát ohled na to, že většina funkcí je tzv. rotovaných a shift-nutých - tedy pozice globálního exrému je posunuta uměle "shiftem" např mimostřed atd. Dále se načítají rotační matice. Benchmark je designovaný pro 5, 10, 15, 20 D (mimo F6 a F7 - ty nejsou pro 5D).
+
+Benchmark spusťte v  nastaveni 10D a 20D (změna oproti AAMAI!) - celkový budget ohodnocení účelové funkce je dán v tabulce v kapitole 2.1.
+
+Povinné algoritmy - jDE a SOMA T3A. Zde je i prostor pro vlastní invenci/testování - kdo chce může implementovat více sofistikované verze DE (SHADE, L-SHADE).
+
+Odkaz na popis a pseudo kód SOMA T3A. Diplomová práce Ing. Matušíkové: https://digilib.k.utb.cz/handle/10563/46109
+
+V becnchmarku je uvedeno 30 opakování - dodržet.
+
+Výsledkem tedy bude report pro 2 algoritmy, 2 dimenzionaální nastavení a 10 funkcí (tedy ze 40 experimentů - každý samozřejmě 30x opakovaný). Jakou formu zvolíte, nechám již na Vás:
+20x průměrný graf konvergence srovnávající 2 algoritmy (tedy graf kde vykreslíte průměrný vývoj best - solution napříč FES/iteracemi - pozor ale - nemůžete vykreslit konfergenci jDE a SOMA dle iterací do jednoho grafu, je nutné na ose x mít FES - pro stanovený FES bude počet iterací jiný! jDE v jedné iteraci ohodnotí CF jen NP-krát (např 50x), SOMA dle vzorce v přednáškách (např 445x). Je nutné to přepočítat a dostat na stejnou úroveň (u DE získáte update best výsledku každých NP ohodnocení CF, u SOMY s větším krokem.
+Tabulky se základníma statistikama pro dvojice algoritmů.
+Tabulka kde budete pouze porovnávat zda algoritmus byl lepší (+), horší (-), nebo výsledky byly stejné (=) pomocí wilcoxonova párového testu.
+... 
+Pár detailů pro zopakování:
+main.cpp obsahuje ukázku volání funkce. Funkce jsou definovány v CEC20_test_func.cpp
+funkce jsou rotovány a shiftovány - načítají se posuny a rotace z adresáře input data. Cílem je zamezení cheatingu algoritmů - aby se nekontroloval první střed funkce a pak došlo k prohledávání. Tedy extrém funkce je pro každé spuštění náhodně posunut, funkce orotována.
+rozsah je zde -100, +100.
